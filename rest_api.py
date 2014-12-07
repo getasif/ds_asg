@@ -1,4 +1,3 @@
-from bottledaemon import daemon_run
 import json
 import bottle
 from bottle import route, run, request, abort, install
@@ -34,7 +33,7 @@ def updateShirt():
 	
 	existed = mongo['shirts'].find_one({'shirtId':entity.get('shirtId')})
 	if not existed:
-		abort(404, 'This shirt doesn\'t exists')
+		abort(404, 'This doesn\'t exists')
 
 	mongo['shirts'].update({'shirtId':entity.get('shirtId')},{"$set": entity},upsert=False)
 	return entity
@@ -70,21 +69,20 @@ def deleteShirt():
 
 	existed = mongo['shirts'].find_one({'shirtId':entity.get('shirtId')})
 	if not existed:
-		abort(404, 'This shirt doesn\'t exists')
+		abort(404, 'This shirt doesn\'t exist')
 
 	mongo['shirts'].remove({'shirtId':entity.get('shirtId')})
 
 
 #Mysql database
-plugin = bottle_mysql.Plugin(dbuser='root', dbpass='root', dbname='assignment3')
+plugin = bottle_mysql.Plugin(dbuser='root', dbpass='mysql', dbname='assignment3')
 install(plugin)
 @route('/shoe/:shoeId')
 def singleShoe(shoeId,db):
 	db.execute('SELECT * FROM shoes WHERE shoe_id="%s"', (int(shoeId),))
 	row = db.fetchone()
 	if not row:
-		abort(404, 'No shoe is found')
-
+		abort(404, 'No shoe found !')
 	return row
 
 
@@ -101,7 +99,7 @@ def updateShoe(db):
 	db.execute('SELECT * FROM shoes WHERE shoe_id="%s"', (int(entity.get('shoeId')),))
 	row = db.fetchone()
 	if not row:
-		abort(404, 'No shoe is found')
+		abort(404, 'No shoe found!')
 
 	db.execute('UPDATE shoes SET shoe_name=%s, shoe_quantity=%s, created_by=%s WHERE shoe_id=%s', (entity.get('shoeName'),int(entity.get('shoeQuantity')),entity.get('createdBy'),int(entity.get('shoeId'))),)
 
@@ -119,7 +117,7 @@ def addShoe(db):
 	db.execute('SELECT * FROM shoes WHERE shoe_id="%s"', (int(entity.get('shoeId')),))
 	row = db.fetchone()
 	if row:
-		abort(409, 'This shoe is already existing')
+		abort(409, 'This shoe already exists')
 
 	db.execute("INSERT INTO shoes(shoe_id, shoe_name, shoe_quantity, created_by) VALUES (%s, %s, %s, %s)",(int(entity.get('shoeId')),entity.get('shoeName'),int(entity.get('shoeQuantity')),entity.get('createdBy')))
 	return data;
@@ -132,7 +130,7 @@ def deleteShoe(db):
 
 	entity = json.loads(data)
 	if not entity.has_key('shoeId'):
-		abort(400, 'No shoeId specified')
+		abort(400, 'No shoeId specified, Please specify one')
 
 	db.execute('SELECT * FROM shoes WHERE shoe_id="%s"', (int(entity.get('shoeId')),))
 	row = db.fetchone()
@@ -141,5 +139,4 @@ def deleteShoe(db):
 	db.execute('DELETE FROM shoes WHERE shoe_id="%s"',(int(entity.get('shoeId')),))
 
 
-if __name__ == "__main__":
-  daemon_run()
+run(server='cherrypy', host='0.0.0.0', port=8080)
